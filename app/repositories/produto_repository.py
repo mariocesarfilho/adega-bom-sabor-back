@@ -5,7 +5,11 @@ from app.models.produto import Produto
 
 
 class ProdutoRepository:
-    """Repository for product data access."""
+    """Repository for product data access.
+    
+    IMPORTANTE: A base real NAO possui preco nem estoque em produtos.
+    O preco esta na tabela de compras (valor da transacao).
+    """
     
     def __init__(self, db: Session):
         self.db = db
@@ -22,10 +26,6 @@ class ProdutoRepository:
         """Get total number of products."""
         return self.db.query(func.count(Produto.produto_id)).scalar()
     
-    def get_low_stock(self, threshold: int = 20) -> List[Produto]:
-        """Get products with low stock."""
-        return self.db.query(Produto).filter(Produto.estoque < threshold).all()
-    
     def get_by_tipo_uva(self, tipo_uva: str) -> List[Produto]:
         """Get products by grape type."""
         return self.db.query(Produto).filter(Produto.tipo_uva == tipo_uva).all()
@@ -33,3 +33,17 @@ class ProdutoRepository:
     def get_by_pais(self, pais: str) -> List[Produto]:
         """Get products by country."""
         return self.db.query(Produto).filter(Produto.pais == pais).all()
+    
+    def get_by_safra(self, safra: int) -> List[Produto]:
+        """Get products by vintage year."""
+        return self.db.query(Produto).filter(Produto.safra == safra).all()
+    
+    def get_distinct_tipos_uva(self) -> List[str]:
+        """Get all distinct grape types."""
+        result = self.db.query(Produto.tipo_uva).distinct().all()
+        return [r[0] for r in result]
+    
+    def get_distinct_paises(self) -> List[str]:
+        """Get all distinct countries."""
+        result = self.db.query(Produto.pais).distinct().all()
+        return [r[0] for r in result]

@@ -1,10 +1,15 @@
-from sqlalchemy import Column, Integer, String, Numeric
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from app.database import Base
 
 
 class Produto(Base):
-    """SQLAlchemy model for products (wines)."""
+    """SQLAlchemy model for products (wines).
+    
+    Estrutura baseada na planilha produtos.xlsx.
+    IMPORTANTE: A base real NAO possui preco nem estoque em produtos.
+    O preco esta na tabela de compras (valor da transacao).
+    """
     
     __tablename__ = "produtos"
     
@@ -13,8 +18,6 @@ class Produto(Base):
     pais = Column(String(100), nullable=False)
     safra = Column(Integer, nullable=False)
     tipo_uva = Column(String(100), nullable=False)
-    estoque = Column(Integer, nullable=False, default=50)
-    preco = Column(Numeric(10, 2), nullable=False, default=100.00)
     
     # Relationships
     compras = relationship("Compra", back_populates="produto")

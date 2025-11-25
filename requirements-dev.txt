@@ -1,0 +1,18 @@
+# Adega Bom Sabor - Development Dependencies
+# Sistema de Apoio a Decisao (SAD)
+
+# Include production dependencies
+-r requirements.txt
+
+# Testing
+pytest>=8.0.0
+pytest-cov>=4.0.0
+pytest-asyncio>=0.23.0
+
+# Code Quality
+ruff>=0.4.0
+mypy>=1.10.0
+
+# Type Stubs
+types-python-dateutil>=2.9.0
+pandas-stubs>=2.0.0

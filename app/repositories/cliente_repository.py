@@ -6,7 +6,10 @@ from app.models.compra import Compra
 
 
 class ClienteRepository:
-    """Repository for customer data access."""
+    """Repository for customer data access.
+    
+    Estrutura baseada na planilha Cliente.xlsx.
+    """
     
     def __init__(self, db: Session):
         self.db = db
@@ -33,7 +36,14 @@ class ClienteRepository:
         return [{"cidade": r.cidade, "quantidade": r.quantidade} for r in result]
     
     def get_customer_features(self, cliente_id: int) -> dict:
-        """Get customer features for ML models."""
+        """Get customer features for ML models.
+        
+        Features incluem:
+        - frequencia_compra (total_compras)
+        - dias_desde_ultima_compra (recencia)
+        - ticket_medio = SUM(valor) / COUNT(compras)
+        - cancelou_assinatura (label para churn)
+        """
         cliente = self.get_by_id(cliente_id)
         if not cliente:
             return None
@@ -46,13 +56,19 @@ class ClienteRepository:
             func.max(Compra.data_compra).label('ultima_compra')
         ).filter(Compra.cliente_id == cliente_id).first()
         
+        total_compras = stats.total_compras or 0
+        valor_total = float(stats.valor_total or 0)
+        ticket_medio = valor_total / total_compras if total_compras > 0 else 0
+        
         return {
             'cliente_id': cliente.cliente_id,
             'idade': cliente.idade,
             'pontuacao_engajamento': cliente.pontuacao_engajamento,
             'assinante': 1 if cliente.assinante_clube else 0,
-            'total_compras': stats.total_compras or 0,
-            'valor_total': float(stats.valor_total or 0),
+            'cancelou_assinatura': 1 if cliente.cancelou_assinatura else 0,
+            'total_compras': total_compras,
+            'valor_total': valor_total,
+            'ticket_medio': ticket_medio,
             'qtd_total': stats.qtd_total or 0,
             'ultima_compra': stats.ultima_compra
         }
@@ -68,3 +84,24 @@ class ClienteRepository:
                 features.append(feature)
         
         return features
+    
+    def get_inativos(self, dias_limite: int = 60) -> List[Cliente]:
+        """Get customers inactive for more than dias_limite days.
+        
+        Regra simbolica: SE cliente > 60 dias sem comprar -> marcar como inativo.
+        """
+        from datetime import datetime, timedelta
+        data_limite = datetime.now().date() - timedelta(days=dias_limite)
+        
+        # Subquery to get last purchase date per customer
+        subquery = self.db.query(
+            Compra.cliente_id,
+            func.max(Compra.data_compra).label('ultima_compra')
+        ).group_by(Compra.cliente_id).subquery()
+        
+        # Get customers whose last purchase is older than data_limite
+        result = self.db.query(Cliente).join(
+            subquery, Cliente.cliente_id == subquery.c.cliente_id
+        ).filter(subquery.c.ultima_compra < data_limite).all()
+        
+        return result

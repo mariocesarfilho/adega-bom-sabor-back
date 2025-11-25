@@ -3,12 +3,16 @@ from typing import Optional, List
 
 
 class ClienteBase(BaseModel):
-    """Base schema for customer data."""
+    """Base schema for customer data.
+    
+    Estrutura baseada na planilha Cliente.xlsx.
+    """
     nome: str
     idade: int
     cidade: str
     pontuacao_engajamento: float
     assinante_clube: bool
+    cancelou_assinatura: bool
 
 
 class ClienteCreate(ClienteBase):
