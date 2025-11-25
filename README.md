@@ -1,14 +1,22 @@
 # Adega Bom Sabor - Backend API
 
-Sistema de Apoio a Decisao (SAD) para gestao de adega com recursos de Machine Learning.
+Sistema de Apoio a Decisao (SAD) para gestao de adega com recursos de Machine Learning e IA Simbolica.
 
 ## Funcionalidades
 
-- **Previsao de Churn**: Modelo Random Forest para identificar clientes com risco de cancelamento
+### Machine Learning
+- **Previsao de Churn**: Modelo Random Forest usando dados REAIS de cancelamento (campo `cancelou_assinatura`)
 - **Segmentacao de Clientes**: Agrupamento K-Means em 3 segmentos (Premium, Sensivel a Promocoes, Ocasional)
-- **Recomendacoes de Produtos**: Sugestoes personalizadas de vinhos baseadas no historico de compras
-- **Alertas Estrategicos**: Notificacoes sobre estoque baixo e clientes em risco
-- **Analytics**: Vendas por mes, top produtos, clientes por cidade
+- **Recomendacoes de Produtos**: Filtragem baseada em conteudo usando atributos do produto (tipo_uva, pais, safra)
+
+### IA Simbolica (Regras SE-ENTAO)
+- **Cliente Inativo**: SE cliente > 60 dias sem comprar → marcar como inativo e sugerir reativacao
+- **Fidelidade de Uva**: SE comprou 3 meses seguidos o mesmo tipo de uva → recomendar semelhantes
+- **Demanda Crescente**: SE demanda historica aumenta → alerta estrategico de reposicao (conceitual)
+
+### Analytics
+- Vendas por mes, top produtos, clientes por cidade
+- Dashboard com KPIs e distribuicoes
 
 ## Arquitetura
 
@@ -62,75 +70,183 @@ scripts/
 
 - Python 3.12+
 - PostgreSQL 14+
-- Poetry (gerenciador de dependencias)
+- Poetry (recomendado) ou pip
 
 ## Instalacao
 
-### 1. Clonar o repositorio
+### Windows
 
+#### 1. Instalar Python 3.12+
+Baixe e instale do site oficial: https://www.python.org/downloads/
+
+Certifique-se de marcar "Add Python to PATH" durante a instalacao.
+
+#### 2. Instalar PostgreSQL
+Baixe e instale do site oficial: https://www.postgresql.org/download/windows/
+
+Durante a instalacao, anote a senha do usuario `postgres`.
+
+#### 3. Clonar o repositorio
+```cmd
+git clone https://github.com/mariocesarfilho/adega-bom-sabor-back.git
+cd adega-bom-sabor-back
+```
+
+#### 4. Criar ambiente virtual e instalar dependencias
+
+**Opcao A: Usando Poetry (recomendado)**
+```cmd
+pip install poetry
+poetry install
+```
+
+**Opcao B: Usando pip**
+```cmd
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+#### 5. Configurar PostgreSQL
+Abra o SQL Shell (psql) ou pgAdmin e execute:
+```sql
+CREATE DATABASE adega_bom_sabor;
+```
+
+#### 6. Criar tabelas e inserir dados
+```cmd
+psql -U postgres -d adega_bom_sabor -f scripts\schema.sql
+psql -U postgres -d adega_bom_sabor -f scripts\seed_data.sql
+```
+
+#### 7. Configurar variaveis de ambiente
+Crie um arquivo `.env` na raiz do projeto:
+```env
+DATABASE_URL=postgresql://postgres:SUA_SENHA@localhost:5432/adega_bom_sabor
+DEBUG=false
+```
+
+#### 8. Executar o servidor
+**Com Poetry:**
+```cmd
+poetry run fastapi dev app/main.py
+```
+
+**Com pip:**
+```cmd
+venv\Scripts\activate
+fastapi dev app/main.py
+```
+
+### Linux / Mac
+
+#### 1. Instalar Python 3.12+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install python3.12 python3.12-venv python3-pip
+```
+
+**Mac (usando Homebrew):**
+```bash
+brew install python@3.12
+```
+
+#### 2. Instalar PostgreSQL
+**Ubuntu/Debian:**
+```bash
+sudo apt install postgresql postgresql-contrib
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+```
+
+**Mac (usando Homebrew):**
+```bash
+brew install postgresql@14
+brew services start postgresql@14
+```
+
+#### 3. Clonar o repositorio
 ```bash
 git clone https://github.com/mariocesarfilho/adega-bom-sabor-back.git
 cd adega-bom-sabor-back
 ```
 
-### 2. Instalar dependencias
+#### 4. Criar ambiente virtual e instalar dependencias
 
+**Opcao A: Usando Poetry (recomendado)**
 ```bash
+pip install poetry
 poetry install
 ```
 
-### 3. Configurar PostgreSQL
+**Opcao B: Usando pip**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
-Criar o banco de dados:
-
+#### 5. Configurar PostgreSQL
 ```bash
 # Conectar ao PostgreSQL
-psql -U postgres
+sudo -u postgres psql
 
 # Criar banco de dados
 CREATE DATABASE adega_bom_sabor;
+
+# Criar usuario (opcional)
+CREATE USER adega_user WITH PASSWORD 'sua_senha';
+GRANT ALL PRIVILEGES ON DATABASE adega_bom_sabor TO adega_user;
 
 # Sair
 \q
 ```
 
-### 4. Criar tabelas
-
+#### 6. Criar tabelas e inserir dados
 ```bash
-psql -U postgres -d adega_bom_sabor -f scripts/schema.sql
+sudo -u postgres psql -d adega_bom_sabor -f scripts/schema.sql
+sudo -u postgres psql -d adega_bom_sabor -f scripts/seed_data.sql
 ```
 
-### 5. Inserir dados iniciais
-
-```bash
-psql -U postgres -d adega_bom_sabor -f scripts/seed_data.sql
-```
-
-### 6. Configurar variaveis de ambiente
-
-Criar arquivo `.env` na raiz do projeto:
-
+#### 7. Configurar variaveis de ambiente
+Crie um arquivo `.env` na raiz do projeto:
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/adega_bom_sabor
 DEBUG=false
 ```
 
-Ajuste as credenciais conforme sua configuracao do PostgreSQL.
-
-## Executar
-
-### Modo desenvolvimento
-
+#### 8. Executar o servidor
+**Com Poetry:**
 ```bash
 poetry run fastapi dev app/main.py
 ```
 
-O servidor estara disponivel em `http://localhost:8000`
+**Com pip:**
+```bash
+source venv/bin/activate
+fastapi dev app/main.py
+```
 
-### Modo producao
+## Acessar a Aplicacao
 
+Apos iniciar o servidor, acesse:
+- API: http://localhost:8000
+- Documentacao Swagger: http://localhost:8000/docs
+- Documentacao ReDoc: http://localhost:8000/redoc
+
+## Modo Producao
+
+Para executar em modo producao:
+
+**Com Poetry:**
 ```bash
 poetry run fastapi run app/main.py
+```
+
+**Com pip:**
+```bash
+fastapi run app/main.py
 ```
 
 ## Endpoints da API
@@ -184,12 +300,20 @@ python-dotenv = "^1.0.0"
 pydantic-settings = "^2.0.0"
 ```
 
-## Notas sobre os Dados
+## Notas IMPORTANTES sobre os Dados
 
-- Os dados de clientes, produtos e compras foram extraidos das planilhas Excel fornecidas
-- Os campos `estoque` e `preco` dos produtos sao valores sinteticos gerados para o prototipo
+### Dados Reais das Planilhas Excel
+- Todos os dados de clientes, produtos e compras foram extraidos das planilhas Excel fornecidas
+- **A base real NAO possui preco nem estoque em produtos**
+- O preco esta na tabela de compras (campo `valor` da transacao)
 - Os modelos de ML sao treinados automaticamente na inicializacao da aplicacao
-- Os labels de churn sao sinteticos, baseados em engajamento e recencia de compras
+- **Os labels de churn sao REAIS** (campo `cancelou_assinatura` da planilha Cliente.xlsx)
+
+### Regras de Estoque (Conceituais)
+As regras de estoque mencionadas no sistema sao apenas **conceituais/simbolicas** para fins academicos:
+- Nao ha campo de estoque no banco de dados
+- Nao ha geracao de valores sinteticos de estoque
+- Alertas de "demanda crescente" sao baseados em tendencias de compras, nao em niveis de estoque
 
 ## Estrutura do Banco de Dados
 
@@ -202,6 +326,7 @@ pydantic-settings = "^2.0.0"
 | cidade | VARCHAR(100) | Cidade |
 | pontuacao_engajamento | DECIMAL(4,2) | Pontuacao de 1 a 10 |
 | assinante_clube | BOOLEAN | Assinante do clube |
+| **cancelou_assinatura** | **BOOLEAN** | **Label real de churn** |
 
 ### Tabela `produtos`
 | Coluna | Tipo | Descricao |
@@ -211,8 +336,8 @@ pydantic-settings = "^2.0.0"
 | pais | VARCHAR(100) | Pais de origem |
 | safra | INTEGER | Ano da safra |
 | tipo_uva | VARCHAR(100) | Tipo de uva |
-| estoque | INTEGER | Quantidade em estoque |
-| preco | DECIMAL(10,2) | Preco unitario |
+
+**IMPORTANTE**: Esta tabela NAO possui campos `estoque` nem `preco` conforme a base real.
 
 ### Tabela `compras`
 | Coluna | Tipo | Descricao |
@@ -220,9 +345,35 @@ pydantic-settings = "^2.0.0"
 | compra_id | INTEGER | Chave primaria |
 | cliente_id | INTEGER | FK para clientes |
 | produto_id | INTEGER | FK para produtos |
-| valor | DECIMAL(10,2) | Valor da compra |
+| **valor** | **DECIMAL(10,2)** | **Preco real da transacao** |
 | quantidade | INTEGER | Quantidade |
 | data_compra | DATE | Data da compra |
+
+## ETL e Feature Engineering
+
+O sistema realiza ETL automatico na inicializacao:
+
+### Features Calculadas
+- `frequencia_compra`: Total de compras do cliente
+- `dias_desde_ultima_compra`: Recencia da ultima compra
+- `ticket_medio`: SUM(valor) / COUNT(compras)
+- `tipo_preferido`: Tipo de uva mais comprado
+- `pais_preferido`: Pais mais comprado
+
+### Modelos de ML
+
+#### 1. Predicao de Churn (RandomForest)
+- **Label**: `cancelou_assinatura` (dados reais da planilha)
+- **Features**: frequencia_compra, ticket_medio, dias_desde_ultima_compra, pontuacao_engajamento, assinante_clube
+- **Saida**: probabilidade_de_churn (0 a 1)
+
+#### 2. Segmentacao (KMeans)
+- **Features**: ticket_medio, quantidade de compras, recorrencia, engajamento
+- **Clusters**: Premium, Sensivel a Promocoes, Ocasional
+
+#### 3. Recomendacao (Filtragem Baseada em Conteudo)
+- **Atributos**: tipo_uva, safra, pais
+- **Metodo**: Similaridade baseada em historico de compras
 
 ## Licenca
 

@@ -4,7 +4,10 @@ from app.database import Base
 
 
 class Cliente(Base):
-    """SQLAlchemy model for customers."""
+    """SQLAlchemy model for customers.
+    
+    Estrutura baseada na planilha Cliente.xlsx.
+    """
     
     __tablename__ = "clientes"
     
@@ -14,6 +17,7 @@ class Cliente(Base):
     cidade = Column(String(100), nullable=False)
     pontuacao_engajamento = Column(Float, nullable=False)
     assinante_clube = Column(Boolean, default=False)
+    cancelou_assinatura = Column(Boolean, default=False)
     
     # Relationships
     compras = relationship("Compra", back_populates="cliente")
