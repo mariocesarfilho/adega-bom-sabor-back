@@ -1,171 +1,229 @@
 # Adega Bom Sabor - Backend API
 
-API FastAPI para o Sistema de Apoio a Decisao (SAD) da Adega Bom Sabor.
+Sistema de Apoio a Decisao (SAD) para gestao de adega com recursos de Machine Learning.
 
 ## Funcionalidades
 
-- Previsao de Churn com Random Forest
-- Segmentacao de Clientes com K-Means
-- Recomendacoes personalizadas de vinhos
-- Alertas estrategicos (estoque baixo, risco de churn)
+- **Previsao de Churn**: Modelo Random Forest para identificar clientes com risco de cancelamento
+- **Segmentacao de Clientes**: Agrupamento K-Means em 3 segmentos (Premium, Sensivel a Promocoes, Ocasional)
+- **Recomendacoes de Produtos**: Sugestoes personalizadas de vinhos baseadas no historico de compras
+- **Alertas Estrategicos**: Notificacoes sobre estoque baixo e clientes em risco
+- **Analytics**: Vendas por mes, top produtos, clientes por cidade
+
+## Arquitetura
+
+O projeto segue uma arquitetura em camadas seguindo principios SOLID:
+
+```
+app/
+├── main.py              # Aplicacao FastAPI, CORS, routers
+├── config.py            # Configuracoes (DATABASE_URL, etc)
+├── database.py          # SQLAlchemy engine e sessao
+├── models/              # Modelos SQLAlchemy (ORM)
+│   ├── cliente.py
+│   ├── produto.py
+│   └── compra.py
+├── schemas/             # Schemas Pydantic (validacao)
+│   ├── cliente.py
+│   ├── produto.py
+│   ├── compra.py
+│   └── dashboard.py
+├── repositories/        # Camada de acesso a dados
+│   ├── cliente_repository.py
+│   ├── produto_repository.py
+│   └── compra_repository.py
+├── services/            # Logica de negocio e ML
+│   ├── ml_service.py
+│   ├── recommendation_service.py
+│   ├── alert_service.py
+│   └── analytics_service.py
+└── routes/              # Endpoints da API
+    ├── dashboard.py
+    ├── clientes.py
+    ├── produtos.py
+    ├── compras.py
+    └── analytics.py
+
+scripts/
+├── schema.sql           # DDL para criar tabelas
+└── seed_data.sql        # Dados iniciais das planilhas
+```
 
 ## Tecnologias
 
-- FastAPI
-- Pandas, NumPy
-- Scikit-learn
+- **FastAPI** - Framework web async
+- **SQLAlchemy 2.0** - ORM para PostgreSQL
+- **PostgreSQL** - Banco de dados relacional
+- **Pandas** - Manipulacao de dados
+- **Scikit-learn** - Modelos de Machine Learning
+- **Pydantic** - Validacao de dados
 
-## Como Executar
+## Pre-requisitos
 
-criar ambiente virutal
+- Python 3.12+
+- PostgreSQL 14+
+- Poetry (gerenciador de dependencias)
 
-python -m venv venv
+## Instalacao
 
-- windows
-venv\Scripts\activate
+### 1. Clonar o repositorio
 
-# No Linux/Mac
-source venv/bin/activate
+```bash
+git clone https://github.com/mariocesarfilho/adega-bom-sabor-back.git
+cd adega-bom-sabor-back
+```
 
-
-
+### 2. Instalar dependencias
 
 ```bash
 poetry install
+```
+
+### 3. Configurar PostgreSQL
+
+Criar o banco de dados:
+
+```bash
+# Conectar ao PostgreSQL
+psql -U postgres
+
+# Criar banco de dados
+CREATE DATABASE adega_bom_sabor;
+
+# Sair
+\q
+```
+
+### 4. Criar tabelas
+
+```bash
+psql -U postgres -d adega_bom_sabor -f scripts/schema.sql
+```
+
+### 5. Inserir dados iniciais
+
+```bash
+psql -U postgres -d adega_bom_sabor -f scripts/seed_data.sql
+```
+
+### 6. Configurar variaveis de ambiente
+
+Criar arquivo `.env` na raiz do projeto:
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/adega_bom_sabor
+DEBUG=false
+```
+
+Ajuste as credenciais conforme sua configuracao do PostgreSQL.
+
+## Executar
+
+### Modo desenvolvimento
+
+```bash
 poetry run fastapi dev app/main.py
 ```
 
-## Endpoints
+O servidor estara disponivel em `http://localhost:8000`
 
-- `GET /api/dashboard` - Resumo do dashboard
-- `GET /api/clientes` - Lista de clientes
-- `GET /api/clientes/{id}` - Detalhes do cliente
-- `GET /api/produtos` - Lista de produtos
+### Modo producao
+
+```bash
+poetry run fastapi run app/main.py
+```
+
+## Endpoints da API
+
+### Health Check
+- `GET /healthz` - Verificar status da aplicacao
+
+### Dashboard
+- `GET /api/dashboard` - Resumo com KPIs e distribuicoes
 - `GET /api/alertas` - Alertas estrategicos
-- `GET /api/churn` - Analise de churn
-- `GET /api/segmentacao` - Segmentacao de clientes
-- `GET /api/recomendacoes/{cliente_id}` - Recomendacoes
 
+### Clientes
+- `GET /api/clientes` - Lista de clientes com churn e segmento
+- `GET /api/clientes/{id}` - Detalhes do cliente com recomendacoes
+- `GET /api/churn` - Analise de churn de todos os clientes
+- `GET /api/segmentacao` - Segmentacao de todos os clientes
+- `GET /api/recomendacoes/{id}` - Recomendacoes para um cliente
 
+### Produtos
+- `GET /api/produtos` - Lista de produtos
 
-Aqui está um modelo de **README.md** que você pode usar para o seu projeto. Basta colar no seu arquivo `README.md`:
+### Compras
+- `GET /api/compras` - Lista de compras com detalhes
 
-````markdown
-# Projeto Adega Bom Sabor - Backend
+### Analytics
+- `GET /api/analytics/vendas-por-mes` - Vendas agregadas por mes
+- `GET /api/analytics/top-produtos` - Produtos mais vendidos
+- `GET /api/analytics/clientes-por-cidade` - Clientes por cidade
 
-Este é o backend do projeto **Adega Bom Sabor**, desenvolvido utilizando **FastAPI**, com várias bibliotecas e funcionalidades para manipulação de dados e análise de informações.
+### Machine Learning
+- `POST /api/ml/retrain` - Retreinar modelos com dados atuais
 
-## Dependências
+## Documentacao da API
 
-Este projeto utiliza as seguintes dependências:
+Apos iniciar o servidor, acesse:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
-- **FastAPI**: Framework para construção de APIs rápidas.
-- **Uvicorn**: Servidor ASGI para executar a aplicação FastAPI.
-- **Pandas**: Para análise e manipulação de dados.
-- **scikit-learn**: Para tarefas de aprendizado de máquina, incluindo clustering.
-- **psycopg**: Biblioteca para conectar-se ao banco de dados PostgreSQL.
-- **openpyxl**: Para manipulação de arquivos Excel (.xlsx).
+## Dependencias
 
-## Como Instalar e Rodar no Windows
-
-### 1. Clonar o Repositório
-
-Primeiro, clone o repositório do projeto para a sua máquina local:
-
-```bash
-git clone https://github.com/seu_usuario/adega-bom-sabor-back.git
-````
-
-### 2. Criar um Ambiente Virtual
-
-Navegue até a pasta do projeto e crie um ambiente virtual:
-
-```bash
-cd adega-bom-sabor-back
-python -m venv venv
+```toml
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = {extras = ["standard"], version = "^0.122.0"}
+sqlalchemy = "^2.0.0"
+psycopg2-binary = "^2.9.9"
+pandas = "^2.3.3"
+scikit-learn = "^1.7.2"
+numpy = "^2.3.5"
+python-dotenv = "^1.0.0"
+pydantic-settings = "^2.0.0"
 ```
 
-### 3. Ativar o Ambiente Virtual
+## Notas sobre os Dados
 
-Ative o ambiente virtual:
+- Os dados de clientes, produtos e compras foram extraidos das planilhas Excel fornecidas
+- Os campos `estoque` e `preco` dos produtos sao valores sinteticos gerados para o prototipo
+- Os modelos de ML sao treinados automaticamente na inicializacao da aplicacao
+- Os labels de churn sao sinteticos, baseados em engajamento e recencia de compras
 
-```bash
-.\venv\Scripts\activate
-```
+## Estrutura do Banco de Dados
 
-### 4. Instalar as Dependências
+### Tabela `clientes`
+| Coluna | Tipo | Descricao |
+|--------|------|-----------|
+| cliente_id | INTEGER | Chave primaria |
+| nome | VARCHAR(255) | Nome do cliente |
+| idade | INTEGER | Idade |
+| cidade | VARCHAR(100) | Cidade |
+| pontuacao_engajamento | DECIMAL(4,2) | Pontuacao de 1 a 10 |
+| assinante_clube | BOOLEAN | Assinante do clube |
 
-Com o ambiente virtual ativo, instale as dependências do projeto:
+### Tabela `produtos`
+| Coluna | Tipo | Descricao |
+|--------|------|-----------|
+| produto_id | INTEGER | Chave primaria |
+| nome | VARCHAR(255) | Nome do vinho |
+| pais | VARCHAR(100) | Pais de origem |
+| safra | INTEGER | Ano da safra |
+| tipo_uva | VARCHAR(100) | Tipo de uva |
+| estoque | INTEGER | Quantidade em estoque |
+| preco | DECIMAL(10,2) | Preco unitario |
 
-```bash
-pip install -r requirements.txt
-```
+### Tabela `compras`
+| Coluna | Tipo | Descricao |
+|--------|------|-----------|
+| compra_id | INTEGER | Chave primaria |
+| cliente_id | INTEGER | FK para clientes |
+| produto_id | INTEGER | FK para produtos |
+| valor | DECIMAL(10,2) | Valor da compra |
+| quantidade | INTEGER | Quantidade |
+| data_compra | DATE | Data da compra |
 
-Se o arquivo `requirements.txt` não estiver presente, instale as dependências manualmente:
+## Licenca
 
-```bash
-pip install fastapi uvicorn pandas scikit-learn psycopg openpyxl
-```
-
-### 5. Rodar a Aplicação
-
-Para rodar o servidor de desenvolvimento, execute o comando abaixo:
-
-```bash
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-A aplicação estará disponível em `http://localhost:8000`.
-
-### 6. Acessar a Documentação
-
-A documentação interativa da API estará disponível em:
-
-```
-http://localhost:8000/docs
-```
-
-### 7. Outras Dependências
-
-Se você não tiver o **Poetry** instalado, instale com:
-
-```bash
-pip install poetry
-```
-
-E depois use o comando:
-
-```bash
-poetry install
-```
-
-Isso instalará todas as dependências definidas no `pyproject.toml`.
-
-## Tecnologias Utilizadas
-
-* **FastAPI**: Framework para construir APIs modernas e rápidas.
-* **Uvicorn**: Servidor ASGI rápido.
-* **Pandas**: Manipulação e análise de dados.
-* **Scikit-learn**: Ferramentas de aprendizado de máquina.
-* **PostgreSQL**: Banco de dados para armazenar dados relacionados à adega.
-
-## Contribuições
-
-Se você deseja contribuir para o projeto, por favor, faça um fork do repositório, crie uma branch para a sua alteração e envie um pull request com a sua contribuição.
-
----
-
-**Autor:** Seu Nome
-**Data de Criação:** 2025
-
-```
-
-### Explicação
-
-- **Dependências**: Lista as bibliotecas que o projeto usa.
-- **Instalação**: Instruções sobre como configurar o ambiente local no Windows, incluindo a criação de um ambiente virtual e a instalação das dependências.
-- **Rodar a Aplicação**: Comandos para rodar o servidor local e acessar a documentação interativa da API.
-- **Tecnologias Utilizadas**: Menciona as ferramentas e bibliotecas principais usadas no projeto.
-
-Você pode ajustar o nome do repositório, autor e qualquer outra informação conforme necessário. Isso deve te ajudar a ter um README claro e completo para seu projeto! Se precisar de mais alguma coisa, só avisar.
-```
+Este projeto foi desenvolvido como prototipo para a Adega Bom Sabor.
