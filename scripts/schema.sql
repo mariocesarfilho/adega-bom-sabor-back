@@ -1,5 +1,11 @@
 -- Schema SQL para Adega Bom Sabor - Sistema de Apoio a Decisao
 -- Execute este script para criar as tabelas no PostgreSQL
+-- Encoding: UTF-8
+
+-- IMPORTANTE: Configurar encoding UTF-8 para Windows
+-- Se estiver no Windows, execute antes: chcp 65001
+-- Ou defina a variavel de ambiente: set PGCLIENTENCODING=UTF8
+SET client_encoding = 'UTF8';
 
 -- Criar banco de dados (execute separadamente se necessario)
 -- CREATE DATABASE adega_bom_sabor;

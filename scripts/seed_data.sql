@@ -2,6 +2,11 @@
 -- Gerado automaticamente a partir dos arquivos CSV fornecidos
 -- Encoding: UTF-8
 
+-- IMPORTANTE: Configurar encoding UTF-8 para Windows
+-- Se estiver no Windows, execute antes: chcp 65001
+-- Ou defina a variavel de ambiente: set PGCLIENTENCODING=UTF8
+SET client_encoding = 'UTF8';
+
 -- Limpar dados existentes
 TRUNCATE TABLE compras CASCADE;
 TRUNCATE TABLE produtos CASCADE;
